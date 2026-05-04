@@ -1,0 +1,15 @@
+dm-tree
+matplotlib
+tensorflow
+tensorflow-privacy
+bs4
+requests
+wget
+lxml
+zipfile38
+numpy >= 1.20.1
+pandas >= 1.2.4
+networkx >= 2.5
+scikit-learn >= 0.24.1
+python-louvain >= 0.15
+scipy >= 1.10.1
