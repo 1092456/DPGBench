@@ -1,12 +1,9 @@
-#!/usr/bin/env python3
-# run_utility_evaluation.py
-# 效用损失批量评估脚本（适配 PrivDPR / PrivHRG / DGG / DP1K / PrivGraph / Tmf / SKG）
+
 
 import sys
 import os
 from UTL import GraphUtilityLossEvaluator
 
-# ====================== 你提供的合成方法映射表 ======================
 SYNTHETIC_METHODS = {
     'DGG': {
         'module': './generators/DGG.py',
@@ -37,7 +34,6 @@ SYNTHETIC_METHODS = {
         'function': 'dp_skg_from_matrix',
     }
 }
-# ====================================================================
 
 def run_for_method(
     method_name: str,
@@ -45,10 +41,7 @@ def run_for_method(
     epsilon_list: list,
     n_runs: int = 5
 ):
-    """
-    对单个合成方法运行效用损失评估
-    完全复用 UTL.py 的逻辑
-    """
+
     method_info = SYNTHETIC_METHODS[method_name]
     module_path = method_info['module']
     func_name = method_info['function']
@@ -66,7 +59,6 @@ def run_for_method(
         dpgs_function_name=func_name
     )
 
-    # 运行评估
     final_df, all_results = evaluator.run_evaluation(
         epsilon_list=epsilon_list,
         n_runs=n_runs,
@@ -83,9 +75,7 @@ def run_all_methods(
     n_runs: int = 5,
     run_only: list = None
 ):
-    """
-    批量运行所有/指定合成方法
-    """
+
     methods_to_run = run_only if run_only else list(SYNTHETIC_METHODS.keys())
 
     print(f"🚀 即将运行效用损失评估 | 方法列表：{methods_to_run}")
@@ -116,10 +106,8 @@ if __name__ == "__main__":
     N_RUNS = 5                                   # 重复次数
     # ===============================================================
 
-    # 读取命令行传入的需要运行的方法
     methods_from_cli = sys.argv[1:] if len(sys.argv) > 1 else None
 
-    # 开始运行
     run_all_methods(
         original_graph_path=ORIGINAL_GRAPH,
         epsilon_list=EPSILONS,

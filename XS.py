@@ -94,17 +94,11 @@ def generate_two_non_overlapping_subgraphs(input_file, output_file1, output_file
     print(f"  第一个子图边数: {len(subgraph_edges1)}")
     print(f"  第二个子图边数: {len(subgraph_edges2)}")
 
-    # ====================== 核心修改开始 ======================
-    # 重新编号函数：保证节点数 = 设定值，保留所有选中节点
+
     def renumber_nodes(edges_list, selected_nodes, start_id=0):
-        """
-        重新编号节点，保证包含所有selected_nodes，从start_id开始连续编号
-        """
-        # 固定使用所有选中的节点，保证数量 = 设定值
         sorted_original_nodes = sorted(selected_nodes)
         node_mapping = {old: new + start_id for new, old in enumerate(sorted_original_nodes)}
 
-        # 处理边
         renumbered_edges_set = set()
         for node1, node2 in edges_list:
             new1 = node_mapping[node1]
@@ -115,11 +109,8 @@ def generate_two_non_overlapping_subgraphs(input_file, output_file1, output_file
         renumbered_edges = sorted(renumbered_edges_set, key=lambda x: (x[0], x[1]))
         return renumbered_edges, node_mapping
 
-    # 子图1 从 0 开始编号
     renumbered_edges1, mapping1 = renumber_nodes(subgraph_edges1, selected_nodes1, start_id=0)
-    # 子图2 从 num_nodes1 开始编号（接在子图1后面）
     renumbered_edges2, mapping2 = renumber_nodes(subgraph_edges2, selected_nodes2, start_id=num_nodes1)
-    # ====================== 核心修改结束 ======================
 
     # 显示统计信息
     print(f"\n第一个子图统计:")
@@ -136,7 +127,6 @@ def generate_two_non_overlapping_subgraphs(input_file, output_file1, output_file
     if mapping2:
         print(f"  节点编号范围: {min(mapping2.values())} 到 {max(mapping2.values())}")
 
-    # 检查是否有自环边
     def check_self_loops(edges_list, graph_name):
         self_loops = [(n1, n2) for n1, n2 in edges_list if n1 == n2]
         if self_loops:
@@ -148,7 +138,6 @@ def generate_two_non_overlapping_subgraphs(input_file, output_file1, output_file
     has_self_loops1 = check_self_loops(renumbered_edges1, "子图1")
     has_self_loops2 = check_self_loops(renumbered_edges2, "子图2")
 
-    # 移除自环边（可选）
     def remove_self_loops(edges_list):
         return [(n1, n2) for n1, n2 in edges_list if n1 != n2]
 
@@ -158,11 +147,9 @@ def generate_two_non_overlapping_subgraphs(input_file, output_file1, output_file
         renumbered_edges2 = remove_self_loops(renumbered_edges2)
         print(f"移除后: 子图1边数={len(renumbered_edges1)}, 子图2边数={len(renumbered_edges2)}")
 
-    # 保存子图函数
     def save_subgraph(filename, renumbered_edges):
         try:
             with open(filename, 'w') as f:
-                # 边已经按升序排列
                 for node1, node2 in renumbered_edges:
                     f.write(f"{node1} {node2}\n")
             print(f"✓ 文件已保存: {filename}")
@@ -180,10 +167,8 @@ def generate_two_non_overlapping_subgraphs(input_file, output_file1, output_file
         print(f"  文件1: {output_file1} ({len(renumbered_edges1)} 条边)")
         print(f"  文件2: {output_file2} ({len(renumbered_edges2)} 条边)")
 
-        # 验证节点编号从0开始
         print(f"\n✓ 验证节点编号:")
 
-        # 检查第一个子图
         nodes1 = set()
         for node1, node2 in renumbered_edges1:
             nodes1.add(node1)
@@ -227,7 +212,6 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    # 使用命令行参数运行
     generate_two_non_overlapping_subgraphs(
         input_file=args.input,
         output_file1=args.output1,
