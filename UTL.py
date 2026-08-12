@@ -38,7 +38,7 @@ class GraphUtilityLossEvaluator:
         self.all_tasks = self.scalar_tasks + self.dist_tasks + self.struct_tasks
 
         self.original_degree_variance = self.compute_degree_variance(self.original_graph)
-        print(f"📊 原始图度方差: {self.original_degree_variance:.6f}")
+        print(f"📊 original graph degree variance: {self.original_degree_variance:.6f}")
 
     def load_graph_from_txt(self, file_path: str) -> nx.Graph:
         G = nx.Graph()
@@ -48,10 +48,10 @@ class GraphUtilityLossEvaluator:
                     if line.strip() and not line.startswith('#'):
                         u, v = map(int, line.strip().split()[:2])
                         G.add_edge(u, v)
-            print(f"✅ 加载原始图：{G.number_of_nodes()} 节点 | {G.number_of_edges()} 边")
+            print(f"✅ Loaded original graph: {G.number_of_nodes()} nodes | {G.number_of_edges()} edges")
             return G
         except Exception as e:
-            print(f"❌ 加载图失败：{e}")
+            print(f"❌ Failed to load graph: {e}")
             return nx.Graph()
 
     def load_dpgs_function(self, module_path: str, function_name: str):
@@ -63,10 +63,10 @@ class GraphUtilityLossEvaluator:
             spec.loader.exec_module(dpgs_module)
             sys.argv = original_argv
             func = getattr(dpgs_module, function_name)
-            print(f"✅ 加载DPGS合成函数：{function_name}")
+            print(f"✅ Loaded DPGS synthesis function: {function_name}")
             return func
         except Exception as e:
-            print(f"❌ 加载DPGS函数失败：{e}")
+            print(f"❌ Failed to load DPGS function: {e}")
             return lambda adj, eps: adj
 
     def graph_to_adj(self, G: nx.Graph) -> np.ndarray:
@@ -107,7 +107,7 @@ class GraphUtilityLossEvaluator:
     def compute_struct_discrepancy(self, struct_r, struct_s, task_type: str) -> float:
         if len(struct_r) != len(struct_s):
             min_len = min(len(struct_r), len(struct_s))
-            print(f"警告: {task_type} 长度不匹配 - r:{len(struct_r)} vs s:{len(struct_s)}, 截断到 {min_len}")
+            print(f"Warning: {task_type} length mismatch - r:{len(struct_r)} vs s:{len(struct_s)}, truncating to {min_len}")
             struct_r = struct_r[:min_len]
             struct_s = struct_s[:min_len]
 
@@ -223,7 +223,7 @@ class GraphUtilityLossEvaluator:
         return loss
 
     def evaluate_single_epsilon(self, epsilon: float, n_runs: int = 5) -> Dict[str, Any]:
-        print(f"\n🔹 评估 ε = {epsilon} | 重复运行 {n_runs} 次")
+        print(f"\n🔹 Evaluating epsilon = {epsilon} | repeated runs {n_runs} time(s)")
         print("-" * 70)
 
         run_losses = []
@@ -235,7 +235,7 @@ class GraphUtilityLossEvaluator:
             run_losses.append(task_loss)
             run_degree_variances.append(task_loss['degree_variance_raw'])
 
-            print(f"  运行 {run + 1}/{n_runs} | 全局效用损失: {task_loss['overall_utility_loss']:.4f} | 合成图度方差: {task_loss['degree_variance_raw']:.6f}")
+            print(f"  Run {run + 1}/{n_runs} | overall utility loss: {task_loss['overall_utility_loss']:.4f} | synthetic graph degree variance: {task_loss['degree_variance_raw']:.6f}")
 
         avg_loss = {t: np.mean([rl[t] for rl in run_losses]) for t in self.all_tasks + ['overall_utility_loss']}
         std_loss = {t: np.std([rl[t] for rl in run_losses]) for t in self.all_tasks + ['overall_utility_loss']}
@@ -255,11 +255,11 @@ class GraphUtilityLossEvaluator:
             'degree_variance_loss_std': std_loss['degree_variance']
         }
 
-        print(f"\n📊 ε={epsilon} 最终结果：")
-        print(f"  平均全局效用损失: {avg_loss['overall_utility_loss']:.4f} (±{std_loss['overall_utility_loss']:.4f})")
-        print(f"  原始图度方差: {self.original_degree_variance:.6f}")
-        print(f"  平均合成图度方差: {avg_synth_degree_variance:.6f} (±{std_synth_degree_variance:.6f})")
-        print(f"  度方差相对误差: {avg_loss['degree_variance']:.6f} (±{std_loss['degree_variance']:.6f})")
+        print(f"\n📊 ε={epsilon} final results: ")
+        print(f"  average overall utility loss: {avg_loss['overall_utility_loss']:.4f} (±{std_loss['overall_utility_loss']:.4f})")
+        print(f"  original graph degree variance: {self.original_degree_variance:.6f}")
+        print(f"  average synthetic graph degree variance: {avg_synth_degree_variance:.6f} (±{std_synth_degree_variance:.6f})")
+        print(f"  degree variance relative error: {avg_loss['degree_variance']:.6f} (±{std_loss['degree_variance']:.6f})")
         return result
 
     def generate_final_table(self, all_results: List[Dict]) -> pd.DataFrame:
@@ -293,15 +293,15 @@ class GraphUtilityLossEvaluator:
         filename = f"{prefix}_utility_loss.csv"
         path = os.path.join(output_path, filename)
         df.to_csv(path, index=False)
-        print(f"\n💾 结果已保存至: {path}")
+        print(f"\n💾 Results saved to: {path}")
         return path
 
     def run_evaluation(self, epsilon_list: List[float], n_runs: int = 5,
                        output_path: str = './utility_loss_results', prefix: str = 'exp'):
         start_time = time.time()
         print("\n" + "=" * 80)
-        print("           效用损失评估（论文公式 + 度方差扩展）")
-        print(f"任务总数: {len(self.all_tasks)} 个 (含度方差) | Epsilon列表: {epsilon_list}")
+        print("           Utility loss evaluation (paper formula + degree-variance extension)")
+        print(f"total tasks: {len(self.all_tasks)} tasks (including degree variance) | epsilon list: {epsilon_list}")
         print("=" * 80)
 
         all_results = []
@@ -314,10 +314,10 @@ class GraphUtilityLossEvaluator:
 
         total_time = time.time() - start_time
         print("\n" + "=" * 80)
-        print(f"✅ 评估完成！总耗时: {total_time:.2f}s | {total_time / 60:.2f}min")
+        print(f"✅ Evaluation completed! Total elapsed time: {total_time:.2f}s | {total_time / 60:.2f}min")
         print("=" * 80)
 
-        print("\n📌 最终全局效用损失及度方差细节汇总：")
+        print("\n📌 Final summary of overall utility loss and degree-variance details: ")
         display_cols = ['epsilon', 'overall_utility_loss_avg', 'overall_utility_loss_std',
                         'original_degree_variance', 'avg_synth_degree_variance', 'degree_variance_loss_avg']
         print(final_df[display_cols].to_string(index=False))
@@ -326,13 +326,13 @@ class GraphUtilityLossEvaluator:
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description='效用损失评估（论文公式版 + 度方差扩展）')
-    parser.add_argument('--original_graph', required=True, type=str, help='原始图文件路径')
-    parser.add_argument('--dpgs_module', required=True, type=str, help='DPGS合成图模块路径')
-    parser.add_argument('--dpgs_func', required=True, type=str, help='DPGS合成图函数名')
-    parser.add_argument('--epsilons', required=True, type=str, help='epsilon列表，逗号分隔，如 0.1,1,10')
-    parser.add_argument('--n_runs', default=5, type=int, help='每个epsilon重复运行次数')
-    parser.add_argument('--output_prefix', default='utility', type=str, help='输出文件前缀')
+    parser = argparse.ArgumentParser(description='Utility loss evaluation (paper formula + degree-variance extension)')
+    parser.add_argument('--original_graph', required=True, type=str, help='Path to original graph file')
+    parser.add_argument('--dpgs_module', required=True, type=str, help='Path to the DPGS synthesis module')
+    parser.add_argument('--dpgs_func', required=True, type=str, help='DPGS synthesis function name')
+    parser.add_argument('--epsilons', required=True, type=str, help='Comma-separated epsilon list, e.g., 0.1,1,10')
+    parser.add_argument('--n_runs', default=5, type=int, help='Number of repeated runs per epsilon')
+    parser.add_argument('--output_prefix', default='utility', type=str, help='Output file prefix')
 
     args = parser.parse_args()
     eps_list = [float(e.strip()) for e in args.epsilons.split(',')]

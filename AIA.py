@@ -23,8 +23,8 @@ class StructuralAttributeIAttacker:
         self.original_graph = self.load_graph_from_txt(original_graph_path)
         self.dpgs_function = self.load_dpgs_function(dpgs_module_path, dpgs_function_name)
 
-        print(f"原始图加载完成: {self.original_graph.number_of_nodes()} 节点, "
-              f"{self.original_graph.number_of_edges()} 边")
+        print(f"Original graph loaded: {self.original_graph.number_of_nodes()} nodes, "
+              f"{self.original_graph.number_of_edges()} edges")
 
         self.results = {}
 
@@ -52,7 +52,7 @@ class StructuralAttributeIAttacker:
 
     def _initialize_attribute_properties(self, graph: nx.Graph):
 
-        print("\n计算节点属性取值范围和类型...")
+        print("\nComputing node attribute ranges and types...")
 
         for attr in self.sensitive_attributes:
             values = []
@@ -122,8 +122,8 @@ class StructuralAttributeIAttacker:
 
                 self.attribute_types[attr] = attr_type
 
-                print(f"  属性 '{attr}': 类型={attr_type}, 范围=[{min_val:.4f}, {max_val:.4f}], "
-                      f"长度={range_length:.4f}, 均值={np.mean(values):.4f}")
+                print(f"  attribute '{attr}': type={attr_type}, range=[{min_val:.4f}, {max_val:.4f}], "
+                      f"span={range_length:.4f}, mean={np.mean(values):.4f}")
             else:
                 self.attribute_ranges[attr] = {
                     'min': 0.0,
@@ -136,14 +136,14 @@ class StructuralAttributeIAttacker:
                     self.attribute_types[attr] = 'discrete'
                 else:
                     self.attribute_types[attr] = 'continuous'
-                print(f"  属性 '{attr}': 类型={self.attribute_types[attr]}, 使用默认范围 [0.0, 1.0]")
+                print(f"  attribute '{attr}': type={self.attribute_types[attr]}, using default range [0.0, 1.0]")
 
     def _initialize_edge_attribute_properties(self, graph: nx.Graph):
 
-        print("\n计算边属性取值范围和类型...")
+        print("\nComputing edge attribute ranges and types...")
 
         if graph.number_of_edges() == 0:
-            print("  图没有边，使用默认范围")
+            print("  Graph has no edges; using default range")
             for attr in self.edge_sensitive_attributes:
                 self.attribute_ranges[attr] = {
                     'min': 0.0,
@@ -204,8 +204,8 @@ class StructuralAttributeIAttacker:
                 }
                 self.attribute_types[attr] = attr_type
 
-                print(f"  边属性 '{attr}': 类型={attr_type}, 范围=[{min_val:.4f}, {max_val:.4f}], "
-                      f"长度={range_length:.4f}, 均值={np.mean(values):.4f}")
+                print(f"  edgesattribute '{attr}': type={attr_type}, range=[{min_val:.4f}, {max_val:.4f}], "
+                      f"span={range_length:.4f}, mean={np.mean(values):.4f}")
 
     def load_graph_from_txt(self, file_path: str) -> nx.Graph:
         G = nx.Graph()
@@ -218,7 +218,7 @@ class StructuralAttributeIAttacker:
                             G.add_edge(int(nodes[0]), int(nodes[1]))
             return G
         except Exception as e:
-            print(f"加载图文件错误: {e}")
+            print(f"Error loading graph file: {e}")
             return nx.Graph()
 
     def load_dpgs_function(self, module_path: str, function_name: str) -> Callable:
@@ -229,10 +229,10 @@ class StructuralAttributeIAttacker:
             sys.argv = [sys.argv[0]]
             spec.loader.exec_module(dpgs_module)
             sys.argv = original_argv
-            print(f"成功加载DPGS函数: {function_name}")
+            print(f"Successfully loaded DPGS function: {function_name}")
             return getattr(dpgs_module, function_name)
         except Exception as e:
-            print(f"加载DPGS函数错误: {e}")
+            print(f"Error loading DPGS function: {e}")
             return lambda adj_matrix, epsilon: adj_matrix
 
     def graph_to_adjacency_matrix(self, graph: nx.Graph) -> Tuple[np.ndarray, List]:
@@ -266,7 +266,7 @@ class StructuralAttributeIAttacker:
             synthetic_adj_matrix = self.dpgs_function(adj_matrix, epsilon)
             return self.adjacency_matrix_to_graph(synthetic_adj_matrix, nodes)
         except Exception as e:
-            print(f"生成合成图错误: {e}")
+            print(f"Error generating synthetic graph: {e}")
             return self._create_fallback_synthetic_graph(original_graph, epsilon)
 
     def _create_fallback_synthetic_graph(self, graph: nx.Graph, epsilon: float) -> nx.Graph:
@@ -293,7 +293,7 @@ class StructuralAttributeIAttacker:
             for u, v in edges_to_add:
                 G_synthetic.add_edge(u, v)
 
-        print(f"回退合成图: {G_synthetic.number_of_nodes()} 节点, {G_synthetic.number_of_edges()} 边")
+        print(f"Fallback synthetic graph: {G_synthetic.number_of_nodes()} nodes, {G_synthetic.number_of_edges()} edges")
         return G_synthetic
 
     def _extract_all_features_from_graph(self, graph: nx.Graph, node: int) -> Tuple[Dict[str, float], Dict[str, float]]:
@@ -636,7 +636,7 @@ class StructuralAttributeIAttacker:
                 'target_type': 'node',
                 'epsilon': epsilon,
                 'st': st_value,
-                'error': '无法提取目标节点的敏感属性候选'
+                'error': 'Unable to extract sensitive attribute candidates for the target node'
             }
 
         selected_sensitive_attr, true_sensitive_value = self._select_sensitive_attribute(sensitive_candidates)
@@ -646,13 +646,13 @@ class StructuralAttributeIAttacker:
             attr_type = self.attribute_types.get(selected_sensitive_attr, 'continuous')
             threshold = self._get_threshold_for_attribute(selected_sensitive_attr)
 
-            print(f"      [敏感属性选择] 本次攻击选择 '{selected_sensitive_attr}' 作为敏感属性")
-            print(f"                    类型: {attr_type}, 阈值: {threshold}, "
-                  f"真实值: {true_sensitive_value:.4f}, "
-                  f"取值范围: [{attr_range_info['min']:.4f}, {attr_range_info['max']:.4f}]")
+            print(f"      [Sensitive attribute selection] This attack selects '{selected_sensitive_attr}' as the sensitive attribute")
+            print(f"                    type: {attr_type}, threshold: {threshold}, "
+                  f"true value: {true_sensitive_value:.4f}, "
+                  f"value range: [{attr_range_info['min']:.4f}, {attr_range_info['max']:.4f}]")
         else:
             print(
-                f"      [敏感属性选择] 本次攻击选择 '{selected_sensitive_attr}' 作为敏感属性，真实值: {true_sensitive_value:.4f}")
+                f"      [Sensitive attribute selection] This attack selects '{selected_sensitive_attr}' as the sensitive attribute, true value: {true_sensitive_value:.4f}")
 
         G_R = self._sample_training_graph(reference_graph, target_node, include_target=(st_value == 1))
 
@@ -664,7 +664,7 @@ class StructuralAttributeIAttacker:
                 'epsilon': epsilon,
                 'st': st_value,
                 'selected_sensitive_attr': selected_sensitive_attr,
-                'error': '训练图太小'
+                'error': 'Training graph is too small'
             }
 
         G_S = self.generate_synthetic_graph(G_R, epsilon)
@@ -688,7 +688,7 @@ class StructuralAttributeIAttacker:
                 'epsilon': epsilon,
                 'st': st_value,
                 'selected_sensitive_attr': selected_sensitive_attr,
-                'error': '合成图中有效节点太少'
+                'error': 'Too few valid nodes in the synthetic graph'
             }
 
         try:
@@ -728,7 +728,7 @@ class StructuralAttributeIAttacker:
                     'epsilon': epsilon,
                     'st': st_value,
                     'selected_sensitive_attr': selected_sensitive_attr,
-                    'error': '训练样本不足'
+                    'error': 'Insufficient training samples'
                 }
 
             scaler = StandardScaler()
@@ -746,11 +746,11 @@ class StructuralAttributeIAttacker:
             if st_value == 1:
                 target_non_sensitive_feat = self._get_non_sensitive_features(target_all_features_real,
                                                                              selected_sensitive_attr)
-                info_source = "真实特征（从参考图获得）"
+                info_source = "True features (from reference graph)"
             else:
                 fake_all_features = self._generate_fake_all_features(target_node, reference_graph)
                 target_non_sensitive_feat = self._get_non_sensitive_features(fake_all_features, selected_sensitive_attr)
-                info_source = "猜测特征（模拟未知情况）"
+                info_source = "Guessed features (simulated unknown setting)"
 
             if not target_non_sensitive_feat:
                 return {
@@ -760,7 +760,7 @@ class StructuralAttributeIAttacker:
                     'epsilon': epsilon,
                     'st': st_value,
                     'selected_sensitive_attr': selected_sensitive_attr,
-                    'error': '无法生成目标节点特征'
+                    'error': 'Unable to generate target node features'
                 }
 
             target_feature_vector = []
@@ -819,7 +819,7 @@ class StructuralAttributeIAttacker:
                 'epsilon': epsilon,
                 'st': st_value,
                 'selected_sensitive_attr': selected_sensitive_attr,
-                'error': f'模型训练或预测失败: {str(e)}'
+                'error': f'Model training or prediction failed: {str(e)}'
             }
 
     def _execute_edge_attribute_inference_attack_with_st(self, target_edge: Tuple[int, int], epsilon: float,
@@ -837,7 +837,7 @@ class StructuralAttributeIAttacker:
                 'target_type': 'edge',
                 'epsilon': epsilon,
                 'st': st_value,
-                'error': '无法提取目标边的敏感属性候选'
+                'error': 'Unable to extract sensitive attribute candidates for the target edge'
             }
 
         selected_sensitive_attr, true_sensitive_value = self._select_sensitive_attribute(sensitive_candidates,
@@ -848,13 +848,13 @@ class StructuralAttributeIAttacker:
             attr_type = self.attribute_types.get(selected_sensitive_attr, 'continuous')
             threshold = self._get_threshold_for_attribute(selected_sensitive_attr)
 
-            print(f"      [边敏感属性选择] 本次攻击选择 '{selected_sensitive_attr}' 作为敏感属性")
-            print(f"                    类型: {attr_type}, 阈值: {threshold}, "
-                  f"真实值: {true_sensitive_value:.4f}, "
-                  f"取值范围: [{attr_range_info['min']:.4f}, {attr_range_info['max']:.4f}]")
+            print(f"      [edgesSensitive attribute selection] This attack selects '{selected_sensitive_attr}' as the sensitive attribute")
+            print(f"                    type: {attr_type}, threshold: {threshold}, "
+                  f"true value: {true_sensitive_value:.4f}, "
+                  f"value range: [{attr_range_info['min']:.4f}, {attr_range_info['max']:.4f}]")
         else:
             print(
-                f"      [边敏感属性选择] 本次攻击选择 '{selected_sensitive_attr}' 作为敏感属性，真实值: {true_sensitive_value:.4f}")
+                f"      [edgesSensitive attribute selection] This attack selects '{selected_sensitive_attr}' as the sensitive attribute, true value: {true_sensitive_value:.4f}")
 
         G_R = self._sample_training_graph_for_edge(reference_graph, target_edge, include_target=(st_value == 1))
 
@@ -866,7 +866,7 @@ class StructuralAttributeIAttacker:
                 'epsilon': epsilon,
                 'st': st_value,
                 'selected_sensitive_attr': selected_sensitive_attr,
-                'error': '训练图太小或边太少'
+                'error': 'Training graph is too small or has too few edges'
             }
 
         G_S = self.generate_synthetic_graph(G_R, epsilon)
@@ -890,7 +890,7 @@ class StructuralAttributeIAttacker:
                 'epsilon': epsilon,
                 'st': st_value,
                 'selected_sensitive_attr': selected_sensitive_attr,
-                'error': '合成图中有效边太少'
+                'error': 'Too few valid edges in the synthetic graph'
             }
 
         try:
@@ -930,7 +930,7 @@ class StructuralAttributeIAttacker:
                     'epsilon': epsilon,
                     'st': st_value,
                     'selected_sensitive_attr': selected_sensitive_attr,
-                    'error': '训练样本不足'
+                    'error': 'Insufficient training samples'
                 }
 
             scaler = StandardScaler()
@@ -948,11 +948,11 @@ class StructuralAttributeIAttacker:
             if st_value == 1:
                 target_non_sensitive_feat = self._get_non_sensitive_features(target_all_features_real,
                                                                              selected_sensitive_attr)
-                info_source = "真实特征（从参考图获得）"
+                info_source = "True features (from reference graph)"
             else:
                 fake_all_features = self._generate_fake_edge_features(target_edge, reference_graph)
                 target_non_sensitive_feat = self._get_non_sensitive_features(fake_all_features, selected_sensitive_attr)
-                info_source = "猜测特征（模拟未知情况）"
+                info_source = "Guessed features (simulated unknown setting)"
 
             if not target_non_sensitive_feat:
                 return {
@@ -962,7 +962,7 @@ class StructuralAttributeIAttacker:
                     'epsilon': epsilon,
                     'st': st_value,
                     'selected_sensitive_attr': selected_sensitive_attr,
-                    'error': '无法生成目标边特征'
+                    'error': 'Unable to generate target edge features'
                 }
 
             target_feature_vector = []
@@ -1021,7 +1021,7 @@ class StructuralAttributeIAttacker:
                 'epsilon': epsilon,
                 'st': st_value,
                 'selected_sensitive_attr': selected_sensitive_attr,
-                'error': f'模型训练或预测失败: {str(e)}'
+                'error': f'Model training or prediction failed: {str(e)}'
             }
 
     def calculate_attack_advantage(self, attack_results: List[Dict[str, Any]]) -> Tuple[float, Dict]:
@@ -1033,7 +1033,7 @@ class StructuralAttributeIAttacker:
         results_st0 = [r for r in attack_results if r['success'] and r.get('st', 0) == 0]
 
         if not results_st1 or not results_st0:
-            print(f"警告: s_t=1结果数={len(results_st1)}, s_t=0结果数={len(results_st0)}")
+            print(f"Warning: s_t=1result count={len(results_st1)}, s_t=0result count={len(results_st0)}")
             return 0.0, {'total': len(attack_results), 'successful_st1': len(results_st1),
                          'successful_st0': len(results_st0)}
 
@@ -1107,28 +1107,28 @@ class StructuralAttributeIAttacker:
         os.makedirs(output_path, exist_ok=True)
 
         reference_graph = self.load_graph_from_txt(reference_graph_path)
-        print(f"参考图加载完成: {reference_graph.number_of_nodes()} 节点, "
-              f"{reference_graph.number_of_edges()} 边")
+        print(f"Reference graph loaded: {reference_graph.number_of_nodes()} nodes, "
+              f"{reference_graph.number_of_edges()} edges")
 
         all_nodes = list(reference_graph.nodes())
         if len(all_nodes) < node_target_count:
             target_nodes = all_nodes
-            print(f"警告: 只有 {len(all_nodes)} 个节点，少于请求的 {node_target_count} 个")
+            print(f"Warning: only {len(all_nodes)} nodes, fewer than requested {node_target_count} ")
         else:
             target_nodes = random.sample(all_nodes, node_target_count)
 
         all_edges = list(reference_graph.edges())
         if len(all_edges) < edge_target_count:
             target_edges = all_edges
-            print(f"警告: 只有 {len(all_edges)} 条边，少于请求的 {edge_target_count} 条")
+            print(f"Warning: only {len(all_edges)} edges, fewer than requested {edge_target_count} ")
         else:
             target_edges = random.sample(all_edges, edge_target_count)
 
-        print(f"选择了 {len(target_nodes)} 个目标节点和 {len(target_edges)} 条目标边进行攻击")
-        print(f"每个目标节点攻击 {attacks_per_target * 2} 次 (s_t=0和s_t=1各{attacks_per_target}次)")
-        print(f"每条目标边攻击 {attacks_per_target * 2} 次 (s_t=0和s_t=1各{attacks_per_target}次)")
-        print(f"节点敏感属性: {self.sensitive_attributes}")
-        print(f"边敏感属性: {self.edge_sensitive_attributes}")
+        print(f"Selected {len(target_nodes)} target nodes and {len(target_edges)} target edges for attack")
+        print(f"Attacks per target node {attacks_per_target * 2} time(s) (each for s_t=0 and s_t=1: {attacks_per_target}time(s))")
+        print(f"Attacks per target edge {attacks_per_target * 2} time(s) (each for s_t=0 and s_t=1: {attacks_per_target}time(s))")
+        print(f"Node sensitive attributes: {self.sensitive_attributes}")
+        print(f"edge sensitive attribute: {self.edge_sensitive_attributes}")
 
         all_attack_results = []
         detailed_results = {}
@@ -1137,19 +1137,19 @@ class StructuralAttributeIAttacker:
 
         for epsilon in epsilon_values:
             print("\n" + "=" * 50)
-            print(f"评估 epsilon = {epsilon}")
+            print(f"Evaluating epsilon = {epsilon}")
             print("=" * 50)
 
             epsilon_attack_results = []
 
-            print(f"\n▶ 节点攻击部分")
+            print(f"\n▶ Node attack section")
             for target_idx, target_node in enumerate(target_nodes):
-                print(f"\n  攻击目标节点 {target_idx + 1}/{len(target_nodes)}: {target_node}")
+                print(f"\n  Target node {target_idx + 1}/{len(target_nodes)}: {target_node}")
 
                 target_results_st1 = []
                 target_results_st0 = []
 
-                print(f"    s_t=1 (目标在训练集中):")
+                print(f"    s_t=1 (target in training set):")
                 for attack_iter in range(attacks_per_target):
                     result = self._execute_attribute_inference_attack_with_st(target_node, epsilon,
                                                                               reference_graph, st_value=1)
@@ -1160,23 +1160,23 @@ class StructuralAttributeIAttacker:
                     if result['success']:
                         status = "✓" if result.get('is_correct', 0) == 1 else "~"
                         error_str = f"{result.get('normalized_error', 1.0):.3f}"
-                        info_source = result.get('info_source', '未知')
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        info_source = result.get('info_source', 'Unknown')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         attr_type = result.get('attribute_type', 'continuous')
                         threshold = result.get('threshold', 0.3)
-                        print(f"      第{attack_iter + 1:2d}次 | {status} | "
-                              f"敏感属性: {sensitive_attr:15s} | "
-                              f"类型: {attr_type:10s} | "
-                              f"阈值: {threshold:.1f} | "
-                              f"真值: {result['true_value']:8.4f} | "
-                              f"预测: {result['predicted_value']:8.4f} | "
-                              f"归一化误差: {error_str} | {info_source}")
+                        print(f"      Iteration {attack_iter + 1:2d} | {status} | "
+                              f"sensitive attribute: {sensitive_attr:15s} | "
+                              f"type: {attr_type:10s} | "
+                              f"threshold: {threshold:.1f} | "
+                              f"true: {result['true_value']:8.4f} | "
+                              f"prediction: {result['predicted_value']:8.4f} | "
+                              f"normalized error: {error_str} | {info_source}")
                     else:
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         print(
-                            f"      第{attack_iter + 1:2d}次 | ✗ | 敏感属性: {sensitive_attr} | 错误: {result.get('error', '未知')}")
+                            f"      Iteration {attack_iter + 1:2d} | ✗ | sensitive attribute: {sensitive_attr} | Error: {result.get('error', 'Unknown')}")
 
-                print(f"    s_t=0 (目标不在训练集中):")
+                print(f"    s_t=0 (target not in training set):")
                 for attack_iter in range(attacks_per_target):
                     result = self._execute_attribute_inference_attack_with_st(target_node, epsilon,
                                                                               reference_graph, st_value=0)
@@ -1187,21 +1187,21 @@ class StructuralAttributeIAttacker:
                     if result['success']:
                         status = "✓" if result.get('is_correct', 0) == 1 else "~"
                         error_str = f"{result.get('normalized_error', 1.0):.3f}"
-                        info_source = result.get('info_source', '未知')
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        info_source = result.get('info_source', 'Unknown')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         attr_type = result.get('attribute_type', 'continuous')
                         threshold = result.get('threshold', 0.3)
-                        print(f"      第{attack_iter + 1:2d}次 | {status} | "
-                              f"敏感属性: {sensitive_attr:15s} | "
-                              f"类型: {attr_type:10s} | "
-                              f"阈值: {threshold:.1f} | "
-                              f"真值: {result['true_value']:8.4f} | "
-                              f"预测: {result['predicted_value']:8.4f} | "
-                              f"归一化误差: {error_str} | {info_source}")
+                        print(f"      Iteration {attack_iter + 1:2d} | {status} | "
+                              f"sensitive attribute: {sensitive_attr:15s} | "
+                              f"type: {attr_type:10s} | "
+                              f"threshold: {threshold:.1f} | "
+                              f"true: {result['true_value']:8.4f} | "
+                              f"prediction: {result['predicted_value']:8.4f} | "
+                              f"normalized error: {error_str} | {info_source}")
                     else:
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         print(
-                            f"      第{attack_iter + 1:2d}次 | ✗ | 敏感属性: {sensitive_attr} | 错误: {result.get('error', '未知')}")
+                            f"      Iteration {attack_iter + 1:2d} | ✗ | sensitive attribute: {sensitive_attr} | Error: {result.get('error', 'Unknown')}")
 
                 successful_st1 = [r for r in target_results_st1 if r['success']]
                 successful_st0 = [r for r in target_results_st0 if r['success']]
@@ -1211,24 +1211,24 @@ class StructuralAttributeIAttacker:
                     success_count_st1 = sum(1 for r in successful_st1 if r.get('is_correct', 0) == 1)
                     success_rate_st1 = success_count_st1 / len(successful_st1)
                     print(
-                        f"    s_t=1: 平均归一化误差={avg_error_st1:.3f}, 成功率={success_rate_st1:.3f} ({success_count_st1}/{len(successful_st1)})")
+                        f"    s_t=1: average normalized error={avg_error_st1:.3f}, success rate={success_rate_st1:.3f} ({success_count_st1}/{len(successful_st1)})")
 
                 if successful_st0:
                     avg_error_st0 = np.mean([r.get('normalized_error', 1.0) for r in successful_st0])
                     success_count_st0 = sum(1 for r in successful_st0 if r.get('is_correct', 0) == 1)
                     success_rate_st0 = success_count_st0 / len(successful_st0)
                     print(
-                        f"    s_t=0: 平均归一化误差={avg_error_st0:.3f}, 成功率={success_rate_st0:.3f} ({success_count_st0}/{len(successful_st0)})")
+                        f"    s_t=0: average normalized error={avg_error_st0:.3f}, success rate={success_rate_st0:.3f} ({success_count_st0}/{len(successful_st0)})")
 
-            print(f"\n▶ 边攻击部分")
+            print(f"\n▶ Edge attack section")
             for target_idx, target_edge in enumerate(target_edges):
                 edge_str = f"({target_edge[0]},{target_edge[1]})"
-                print(f"\n  攻击目标边 {target_idx + 1}/{len(target_edges)}: {edge_str}")
+                print(f"\n  Target edge {target_idx + 1}/{len(target_edges)}: {edge_str}")
 
                 target_results_st1 = []
                 target_results_st0 = []
 
-                print(f"    s_t=1 (目标边在训练集中):")
+                print(f"    s_t=1 (target edge in training set):")
                 for attack_iter in range(attacks_per_target):
                     result = self._execute_edge_attribute_inference_attack_with_st(target_edge, epsilon,
                                                                                    reference_graph, st_value=1)
@@ -1239,23 +1239,23 @@ class StructuralAttributeIAttacker:
                     if result['success']:
                         status = "✓" if result.get('is_correct', 0) == 1 else "~"
                         error_str = f"{result.get('normalized_error', 1.0):.3f}"
-                        info_source = result.get('info_source', '未知')
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        info_source = result.get('info_source', 'Unknown')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         attr_type = result.get('attribute_type', 'continuous')
                         threshold = result.get('threshold', 0.3)
-                        print(f"      第{attack_iter + 1:2d}次 | {status} | "
-                              f"边敏感属性: {sensitive_attr:20s} | "
-                              f"类型: {attr_type:10s} | "
-                              f"阈值: {threshold:.1f} | "
-                              f"真值: {result['true_value']:8.4f} | "
-                              f"预测: {result['predicted_value']:8.4f} | "
-                              f"归一化误差: {error_str} | {info_source}")
+                        print(f"      Iteration {attack_iter + 1:2d} | {status} | "
+                              f"edge sensitive attribute: {sensitive_attr:20s} | "
+                              f"type: {attr_type:10s} | "
+                              f"threshold: {threshold:.1f} | "
+                              f"true: {result['true_value']:8.4f} | "
+                              f"prediction: {result['predicted_value']:8.4f} | "
+                              f"normalized error: {error_str} | {info_source}")
                     else:
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         print(
-                            f"      第{attack_iter + 1:2d}次 | ✗ | 边敏感属性: {sensitive_attr} | 错误: {result.get('error', '未知')}")
+                            f"      Iteration {attack_iter + 1:2d} | ✗ | edge sensitive attribute: {sensitive_attr} | Error: {result.get('error', 'Unknown')}")
 
-                print(f"    s_t=0 (目标边不在训练集中):")
+                print(f"    s_t=0 (target edge not in training set):")
                 for attack_iter in range(attacks_per_target):
                     result = self._execute_edge_attribute_inference_attack_with_st(target_edge, epsilon,
                                                                                    reference_graph, st_value=0)
@@ -1266,21 +1266,21 @@ class StructuralAttributeIAttacker:
                     if result['success']:
                         status = "✓" if result.get('is_correct', 0) == 1 else "~"
                         error_str = f"{result.get('normalized_error', 1.0):.3f}"
-                        info_source = result.get('info_source', '未知')
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        info_source = result.get('info_source', 'Unknown')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         attr_type = result.get('attribute_type', 'continuous')
                         threshold = result.get('threshold', 0.3)
-                        print(f"      第{attack_iter + 1:2d}次 | {status} | "
-                              f"边敏感属性: {sensitive_attr:20s} | "
-                              f"类型: {attr_type:10s} | "
-                              f"阈值: {threshold:.1f} | "
-                              f"真值: {result['true_value']:8.4f} | "
-                              f"预测: {result['predicted_value']:8.4f} | "
-                              f"归一化误差: {error_str} | {info_source}")
+                        print(f"      Iteration {attack_iter + 1:2d} | {status} | "
+                              f"edge sensitive attribute: {sensitive_attr:20s} | "
+                              f"type: {attr_type:10s} | "
+                              f"threshold: {threshold:.1f} | "
+                              f"true: {result['true_value']:8.4f} | "
+                              f"prediction: {result['predicted_value']:8.4f} | "
+                              f"normalized error: {error_str} | {info_source}")
                     else:
-                        sensitive_attr = result.get('selected_sensitive_attr', '未知')
+                        sensitive_attr = result.get('selected_sensitive_attr', 'Unknown')
                         print(
-                            f"      第{attack_iter + 1:2d}次 | ✗ | 边敏感属性: {sensitive_attr} | 错误: {result.get('error', '未知')}")
+                            f"      Iteration {attack_iter + 1:2d} | ✗ | edge sensitive attribute: {sensitive_attr} | Error: {result.get('error', 'Unknown')}")
 
                 successful_st1 = [r for r in target_results_st1 if r['success']]
                 successful_st0 = [r for r in target_results_st0 if r['success']]
@@ -1290,14 +1290,14 @@ class StructuralAttributeIAttacker:
                     success_count_st1 = sum(1 for r in successful_st1 if r.get('is_correct', 0) == 1)
                     success_rate_st1 = success_count_st1 / len(successful_st1)
                     print(
-                        f"    s_t=1: 平均归一化误差={avg_error_st1:.3f}, 成功率={success_rate_st1:.3f} ({success_count_st1}/{len(successful_st1)})")
+                        f"    s_t=1: average normalized error={avg_error_st1:.3f}, success rate={success_rate_st1:.3f} ({success_count_st1}/{len(successful_st1)})")
 
                 if successful_st0:
                     avg_error_st0 = np.mean([r.get('normalized_error', 1.0) for r in successful_st0])
                     success_count_st0 = sum(1 for r in successful_st0 if r.get('is_correct', 0) == 1)
                     success_rate_st0 = success_count_st0 / len(successful_st0)
                     print(
-                        f"    s_t=0: 平均归一化误差={avg_error_st0:.3f}, 成功率={success_rate_st0:.3f} ({success_count_st0}/{len(successful_st0)})")
+                        f"    s_t=0: average normalized error={avg_error_st0:.3f}, success rate={success_rate_st0:.3f} ({success_count_st0}/{len(successful_st0)})")
 
             node_attack_results = [r for r in epsilon_attack_results if r.get('target_type') == 'node' and r['success']]
             edge_attack_results = [r for r in epsilon_attack_results if r.get('target_type') == 'edge' and r['success']]
@@ -1405,7 +1405,7 @@ class StructuralAttributeIAttacker:
                 csv_path = os.path.join(output_path,
                                         f"AIA_{datetime.now().strftime('%Y%m%d_%H%M%S')}_statistics.csv")
             result_df.to_csv(csv_path, index=False)
-            print(f"\n结果摘要已保存到: {csv_path}")
+            print(f"\nResult summary saved to: {csv_path}")
 
         if output_prefix:
             pkl_path = os.path.join(output_path, f"{output_prefix}_detailed.pkl")
@@ -1415,15 +1415,15 @@ class StructuralAttributeIAttacker:
 
         with open(pkl_path, 'wb') as f:
             pickle.dump(detailed_results, f)
-        print(f"详细结果已保存到: {pkl_path}")
+        print(f"Detailed results saved to: {pkl_path}")
 
         print("\n" + "=" * 50)
-        print("AIA评估结果摘要（包含节点和边攻击，s_t=0和s_t=1）")
+        print("AIA evaluation summary (including node and edge attacks, s_t=0 and s_t=1)")
         print("=" * 50)
         if not result_df.empty:
             print("\n" + result_df.to_string(index=False))
         else:
-            print("没有有效的评估结果")
+            print("No valid evaluation results")
 
         return result_df, detailed_results
 
@@ -1433,34 +1433,34 @@ class StructuralAttributeIAttacker:
                 range_info = self.attribute_ranges[attr]
                 attr_type = self.attribute_types[attr]
                 threshold = self._get_threshold_for_attribute(attr)
-                print(f"  {attr:20s}: 类型={attr_type}, 阈值={threshold}, "
-                      f"范围=[{range_info['min']:.4f}, {range_info['max']:.4f}]")
+                print(f"  {attr:20s}: type={attr_type}, threshold={threshold}, "
+                      f"range=[{range_info['min']:.4f}, {range_info['max']:.4f}]")
 
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='属性推断攻击(AIA)')
+    parser = argparse.ArgumentParser(description='Attribute inference attack (AIA)')
 
     parser.add_argument('--original_graph', type=str, required=True,
-                        help='原始图文件路径')
+                        help='Path to original graph file')
     parser.add_argument('--reference_graph', type=str, required=True,
-                        help='参考图文件路径')
+                        help='Path to reference graph file')
     parser.add_argument('--dpgs_module', type=str, required=True,
-                        help='DPGS模块文件路径')
+                        help='Path to DPGS module file')
     parser.add_argument('--dpgs_function', type=str, required=True,
-                        help='DPGS函数名称')
+                        help='DPGS function name')
 
     parser.add_argument('--node_targets', type=int, required=True,
-                        help='节点目标数量')
+                        help='Number of node targets')
     parser.add_argument('--edge_targets', type=int, required=True,
-                        help='边目标数量')
+                        help='Number of edge targets')
     parser.add_argument('--attacks_per_target', type=int, required=True,
-                        help='每个目标的攻击次数')
+                        help='Number of attacks per target')
     parser.add_argument('--epsilon_values', type=str, required=True,
-                        help='隐私预算列表，用逗号分隔，例如: 0.01,1,999')
+                        help='Comma-separated privacy budget list, e.g., 0.01,1,999')
 
     parser.add_argument('--output_prefix', type=str, required=True,
-                        help='输出文件前缀，用于生成带属性的文件名')
+                        help='Output file prefix for generated result files')
 
     args = parser.parse_args()
 

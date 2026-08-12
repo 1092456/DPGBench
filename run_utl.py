@@ -47,12 +47,12 @@ def run_for_method(
     func_name = method_info['function']
 
     print(f"\n\n==================================================")
-    print(f"        正在运行：{method_name}")
-    print(f"  模块：{module_path}")
-    print(f"  函数：{func_name}")
+    print(f"        Running: {method_name}")
+    print(f"  Module: {module_path}")
+    print(f"  Function: {func_name}")
     print(f"==================================================\n")
 
-    # 初始化效用损失评估器（来自 UTL.py）
+    # Initialize the utility-loss evaluator from UTL.py
     evaluator = GraphUtilityLossEvaluator(
         original_graph_path=original_graph_path,
         dpgs_module_path=module_path,
@@ -78,14 +78,14 @@ def run_all_methods(
 
     methods_to_run = run_only if run_only else list(SYNTHETIC_METHODS.keys())
 
-    print(f"🚀 即将运行效用损失评估 | 方法列表：{methods_to_run}")
-    print(f"📊 原始图：{original_graph_path}")
-    print(f"🔒 Epsilon：{epsilon_list}")
-    print(f"🔁 每方法运行次数：{n_runs}\n")
+    print(f"🚀 About to run utility-loss evaluation | method list: {methods_to_run}")
+    print(f"📊 original graph: {original_graph_path}")
+    print(f"🔒 Epsilon: {epsilon_list}")
+    print(f"🔁 Runs per method: {n_runs}\n")
 
     for method in methods_to_run:
         if method not in SYNTHETIC_METHODS:
-            print(f"⚠️  跳过未知方法：{method}")
+            print(f"⚠️  Skipping unknown method: {method}")
             continue
 
         run_for_method(
@@ -95,15 +95,15 @@ def run_all_methods(
             n_runs=n_runs
         )
 
-    print("\n✅ 所有方法的效用损失评估全部完成！")
+    print("\n✅ Utility-loss evaluation completed for all methods!")
 
 
 if __name__ == "__main__":
 
-    # ===================== 请在这里配置你的参数 =====================
-    ORIGINAL_GRAPH = "./data/Default.txt"  # 你的原始图路径
-    EPSILONS = [1,2,3,4,5,6,7,8,9,10,9999]       # 隐私预算
-    N_RUNS = 5                                   # 重复次数
+    # ===================== Configure parameters here =====================
+    ORIGINAL_GRAPH = "./data/Default.txt"  # Path to the original graph
+    EPSILONS = [1,2,3,4,5,6,7,8,9,10,9999]       # Privacy budgets
+    N_RUNS = 5                                   # Number of repeated runs
     # ===============================================================
 
     methods_from_cli = sys.argv[1:] if len(sys.argv) > 1 else None

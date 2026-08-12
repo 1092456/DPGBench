@@ -1,11 +1,11 @@
-#!/bin/bash
+﻿#!/bin/bash
 
 # ================================================
-# 图攻击全面测试脚本
-# 测试所有合成图方法和攻击模式的组合
+# Comprehensive graph-attack test script
+# Test all combinations of synthetic graph methods and attack modes.
 # ================================================
 
-# 设置颜色输出
+# Configure colored terminal output.
 RED='\033[0;31m'
 GREEN='\033[0;32m'
 YELLOW='\033[1;33m'
@@ -14,14 +14,14 @@ PURPLE='\033[0;35m'
 CYAN='\033[0;36m'
 NC='\033[0m' # No Color
 
-# 配置参数
+# Configure experiment parameters.
 DATA_NAME=("p2p-Gnutella25")
 NODE_TARGETS=3
 EDGE_TARGETS=3
 ATTACKS_PER_TARGET=20
 EPSILON_VALUES="1,2,3,4,5,6,7,8,9,10,9999"
 
-# 合成图方法列表（现在所有方法都会被识别）
+# Synthetic graph method list; all listed methods are recognized by run.py.
 SYNTHETIC_METHODS=(
     "PrivGraph"
     "DGG"
@@ -32,22 +32,22 @@ SYNTHETIC_METHODS=(
     "DP1K"
 )
 
-# 攻击模式列表
+# Attack modes to evaluate.
 ATTACK_MODES=("MIA" "AIA")
 
-# 计数器
+# Track aggregate test progress.
 TOTAL_TESTS=$(( ${#SYNTHETIC_METHODS[@]} * ${#ATTACK_MODES[@]} ))
 CURRENT_TEST=0
 SUCCESS_COUNT=0
 FAIL_COUNT=0
 
-# 日志文件
+# Create timestamped log files.
 TIMESTAMP=$(date +"%Y%m%d_%H%M%S")
 LOG_FILE="test_results_${TIMESTAMP}.log"
 SUMMARY_FILE="test_summary_${TIMESTAMP}.csv"
 
 # ================================================
-# 函数：打印带颜色的消息
+# Function: print a colored message.
 # ================================================
 print_message() {
     local color=$1
@@ -56,7 +56,7 @@ print_message() {
 }
 
 # ================================================
-# 函数：记录日志
+# Function: write a message to the log file.
 # ================================================
 log_message() {
     local message=$1
@@ -64,7 +64,7 @@ log_message() {
 }
 
 # ================================================
-# 函数：运行单个测试
+# Function: run one experiment configuration.
 # ================================================
 run_test() {
     local attack_mode=$1
@@ -73,15 +73,15 @@ run_test() {
     CURRENT_TEST=$((CURRENT_TEST + 1))
 
     print_message "$YELLOW" "\n=========================================="
-    print_message "$YELLOW" "测试 $CURRENT_TEST / $TOTAL_TESTS"
-    print_message "$YELLOW" "攻击模式: $attack_mode"
-    print_message "$YELLOW" "合成方法: $synthetic_method"
-    print_message "$YELLOW" "数据集: $DATA_NAME"
+    print_message "$YELLOW" "Test $CURRENT_TEST / $TOTAL_TESTS"
+    print_message "$YELLOW" "Attack mode: $attack_mode"
+    print_message "$YELLOW" "Synthesis method: $synthetic_method"
+    print_message "$YELLOW" "Dataset: $DATA_NAME"
     print_message "$YELLOW" "==========================================\n"
 
-    log_message "开始测试: $attack_mode - $synthetic_method"
+    log_message "Starting test: $attack_mode - $synthetic_method"
 
-    # 构建命令
+    # Build the command for the selected attack and synthesis method.
     CMD="python run.py \
         --attack_mode $attack_mode \
         --data_name $DATA_NAME \
@@ -91,154 +91,149 @@ run_test() {
         --attacks_per_target $ATTACKS_PER_TARGET \
         --epsilon_values $EPSILON_VALUES"
 
-    print_message "$CYAN" "执行命令:"
+    print_message "$CYAN" "Executing command:"
     echo "$CMD"
     echo ""
 
-    # 执行命令
+    # Execute the configured run.py invocation.
     eval $CMD
 
-    # 检查执行结果
+    # Record the execution result in both the log and summary files.
     if [ $? -eq 0 ]; then
-        print_message "$GREEN" "✓ 测试成功: $attack_mode - $synthetic_method"
-        log_message "测试成功: $attack_mode - $synthetic_method"
+        print_message "$GREEN" "Test succeeded: $attack_mode - $synthetic_method"
+        log_message "Test succeeded: $attack_mode - $synthetic_method"
         SUCCESS_COUNT=$((SUCCESS_COUNT + 1))
-
-        # 记录到摘要文件
-        echo "$attack_mode,$synthetic_method,成功,$(date +"%Y-%m-%d %H:%M:%S")" >> "$SUMMARY_FILE"
+        echo "$attack_mode,$synthetic_method,success,$(date +"%Y-%m-%d %H:%M:%S")" >> "$SUMMARY_FILE"
     else
-        print_message "$RED" "✗ 测试失败: $attack_mode - $synthetic_method"
-        log_message "测试失败: $attack_mode - $synthetic_method"
+        print_message "$RED" "Test failed: $attack_mode - $synthetic_method"
+        log_message "Test failed: $attack_mode - $synthetic_method"
         FAIL_COUNT=$((FAIL_COUNT + 1))
-
-        # 记录到摘要文件
-        echo "$attack_mode,$synthetic_method,失败,$(date +"%Y-%m-%d %H:%M:%S")" >> "$SUMMARY_FILE"
+        echo "$attack_mode,$synthetic_method,failure,$(date +"%Y-%m-%d %H:%M:%S")" >> "$SUMMARY_FILE"
     fi
 
     echo ""
-    sleep 2  # 等待2秒，避免资源冲突
+    sleep 2  # Wait briefly to reduce resource contention between runs.
 }
 
 # ================================================
-# 主程序开始
+# Main program starts.
 # ================================================
 clear
 print_message "$PURPLE" "=========================================="
-print_message "$PURPLE" "    图攻击全面测试脚本 v1.0"
+print_message "$PURPLE" "    Comprehensive graph-attack test script v1.0"
 print_message "$PURPLE" "=========================================="
 echo ""
 
-print_message "$BLUE" "测试配置:"
+print_message "$BLUE" "Test configuration:"
 print_message "$BLUE" "------------------------------------------"
-echo "数据集: $DATA_NAME"
-echo "节点目标数: $NODE_TARGETS"
-echo "边目标数: $EDGE_TARGETS"
-echo "攻击次数/目标: $ATTACKS_PER_TARGET"
-echo "隐私预算: $EPSILON_VALUES"
-echo "合成图方法: ${SYNTHETIC_METHODS[*]}"
-echo "攻击模式: ${ATTACK_MODES[*]}"
-echo "总测试数: $TOTAL_TESTS"
+echo "Dataset: $DATA_NAME"
+echo "Number of node targets: $NODE_TARGETS"
+echo "Number of edge targets: $EDGE_TARGETS"
+echo "Attacks per target: $ATTACKS_PER_TARGET"
+echo "Privacy budgets: $EPSILON_VALUES"
+echo "Synthetic graph methods: ${SYNTHETIC_METHODS[*]}"
+echo "Attack modes: ${ATTACK_MODES[*]}"
+echo "Total tests: $TOTAL_TESTS"
 print_message "$BLUE" "------------------------------------------"
 echo ""
-print_message "$BLUE" "日志文件: $LOG_FILE"
-print_message "$BLUE" "摘要文件: $SUMMARY_FILE"
+print_message "$BLUE" "Log file: $LOG_FILE"
+print_message "$BLUE" "Summary file: $SUMMARY_FILE"
 echo ""
 
-# 初始化日志文件
-echo "测试日志 - $(date)" > "$LOG_FILE"
+# Initialize the log file.
+echo "Test log - $(date)" > "$LOG_FILE"
 echo "==========================================" >> "$LOG_FILE"
 echo "" >> "$LOG_FILE"
 
-# 初始化摘要文件
-echo "攻击模式,合成方法,状态,时间" > "$SUMMARY_FILE"
+# Initialize the CSV summary file.
+echo "attack_mode,synthesis_method,status,time" > "$SUMMARY_FILE"
 
-# 询问用户是否继续
-read -p "是否开始测试? (y/n): " -n 1 -r
+# Ask for confirmation before launching the full batch.
+read -p "Start tests? (y/n): " -n 1 -r
 echo ""
 if [[ ! $REPLY =~ ^[Yy]$ ]]; then
-    print_message "$RED" "测试已取消"
+    print_message "$RED" "Tests canceled"
     exit 1
 fi
 
 echo ""
-print_message "$YELLOW" "开始测试..."
-log_message "开始全面测试"
+print_message "$YELLOW" "Starting tests..."
+log_message "Starting comprehensive tests"
 
-# 记录开始时间
+# Record the start time for the full batch.
 START_TIME=$(date +%s)
 
-# 循环运行所有测试
+# Run all attack/method combinations.
 for attack_mode in "${ATTACK_MODES[@]}"; do
     for synthetic_method in "${SYNTHETIC_METHODS[@]}"; do
         run_test "$attack_mode" "$synthetic_method"
     done
 done
 
-# 计算总耗时
+# Compute total elapsed time.
 END_TIME=$(date +%s)
 DURATION=$((END_TIME - START_TIME))
 DURATION_MIN=$((DURATION / 60))
 DURATION_SEC=$((DURATION % 60))
 
 # ================================================
-# 显示测试结果摘要
+# Display the test-result summary.
 # ================================================
 clear
 print_message "$PURPLE" "=========================================="
-print_message "$PURPLE" "          测试完成 - 结果摘要"
+print_message "$PURPLE" "          Tests completed - result summary"
 print_message "$PURPLE" "=========================================="
 echo ""
 
-print_message "$GREEN" "成功: $SUCCESS_COUNT / $TOTAL_TESTS"
-print_message "$RED" "失败: $FAIL_COUNT / $TOTAL_TESTS"
-print_message "$CYAN" "总耗时: ${DURATION_MIN}分${DURATION_SEC}秒"
+print_message "$GREEN" "Success: $SUCCESS_COUNT / $TOTAL_TESTS"
+print_message "$RED" "Failure: $FAIL_COUNT / $TOTAL_TESTS"
+print_message "$CYAN" "Total elapsed time: ${DURATION_MIN}m ${DURATION_SEC}s"
 echo ""
 
-print_message "$BLUE" "详细结果:"
+print_message "$BLUE" "Detailed results:"
 print_message "$BLUE" "------------------------------------------"
 
-# 读取并显示摘要文件内容
+# Read and display the summary file, skipping the CSV header.
 if [ -f "$SUMMARY_FILE" ]; then
-    # 跳过标题行
     tail -n +2 "$SUMMARY_FILE" | while IFS=',' read -r mode method status time; do
-        if [ "$status" = "成功" ]; then
-            echo -e "${mode} - ${method}: ${GREEN}✓ 成功${NC}"
+        if [ "$status" = "success" ]; then
+            echo -e "${mode} - ${method}: ${GREEN}success${NC}"
         else
-            echo -e "${mode} - ${method}: ${RED}✗ 失败${NC}"
+            echo -e "${mode} - ${method}: ${RED}failure${NC}"
         fi
     done
 fi
 
 print_message "$BLUE" "------------------------------------------"
 echo ""
-print_message "$GREEN" "日志文件: $LOG_FILE"
-print_message "$GREEN" "摘要文件: $SUMMARY_FILE"
+print_message "$GREEN" "Log file: $LOG_FILE"
+print_message "$GREEN" "Summary file: $SUMMARY_FILE"
 echo ""
 
-# 保存测试配置
+# Save the final test configuration and aggregate result counts.
 CONFIG_FILE="test_config_${TIMESTAMP}.txt"
 cat > "$CONFIG_FILE" << EOF
-测试配置信息
+Test configuration
 ================================
-日期: $(date)
-数据集: $DATA_NAME
-节点目标数: $NODE_TARGETS
-边目标数: $EDGE_TARGETS
-攻击次数/目标: $ATTACKS_PER_TARGET
-隐私预算: $EPSILON_VALUES
-合成图方法: ${SYNTHETIC_METHODS[*]}
-攻击模式: ${ATTACK_MODES[*]}
-总测试数: $TOTAL_TESTS
-成功: $SUCCESS_COUNT
-失败: $FAIL_COUNT
-总耗时: ${DURATION_MIN}分${DURATION_SEC}秒
+Date: $(date)
+Dataset: $DATA_NAME
+Number of node targets: $NODE_TARGETS
+Number of edge targets: $EDGE_TARGETS
+Attacks per target: $ATTACKS_PER_TARGET
+Privacy budgets: $EPSILON_VALUES
+Synthetic graph methods: ${SYNTHETIC_METHODS[*]}
+Attack modes: ${ATTACK_MODES[*]}
+Total tests: $TOTAL_TESTS
+Success: $SUCCESS_COUNT
+Failure: $FAIL_COUNT
+Total elapsed time: ${DURATION_MIN}m ${DURATION_SEC}s
 EOF
 
-print_message "$CYAN" "配置文件已保存: $CONFIG_FILE"
+print_message "$CYAN" "Configuration file saved: $CONFIG_FILE"
 
-# 如果有失败的测试，显示警告
+# Warn the user when any configuration failed.
 if [ $FAIL_COUNT -gt 0 ]; then
-    print_message "$RED" "\n⚠ 警告: 有 $FAIL_COUNT 个测试失败，请检查日志文件"
+    print_message "$RED" "\nWarning: $FAIL_COUNT test(s) failed; please check the log file."
 fi
 
 print_message "$PURPLE" "\n=========================================="

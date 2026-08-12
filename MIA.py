@@ -65,10 +65,10 @@ class ExactMIAAttacker:
                         nodes = line.strip().split()
                         if len(nodes) >= 2:
                             G.add_edge(int(nodes[0]), int(nodes[1]))
-            print(f"成功加载图: {G.number_of_nodes()} 节点, {G.number_of_edges()} 边")
+            print(f"Successfully loaded graph: {G.number_of_nodes()} nodes, {G.number_of_edges()} edges")
             return G
         except Exception as e:
-            print(f"加载图文件错误: {e}")
+            print(f"Error loading graph file: {e}")
             return nx.Graph()
 
     def load_dpgs_function(self, module_path: str, function_name: str):
@@ -79,10 +79,10 @@ class ExactMIAAttacker:
             sys.argv = [sys.argv[0]]
             spec.loader.exec_module(dpgs_module)
             sys.argv = original_argv
-            print(f"成功加载DPGS函数: {function_name}")
+            print(f"Successfully loaded DPGS function: {function_name}")
             return getattr(dpgs_module, function_name)
         except Exception as e:
-            print(f"加载DPGS函数错误: {e}")
+            print(f"Error loading DPGS function: {e}")
             return lambda adj_matrix, epsilon: adj_matrix
 
     def graph_to_adjacency_matrix(self, graph: nx.Graph) -> Tuple[np.ndarray, List]:
@@ -116,7 +116,7 @@ class ExactMIAAttacker:
             synthetic_adj_matrix = self.dpgs_function(adj_matrix, epsilon)
             return self.adjacency_matrix_to_graph(synthetic_adj_matrix, nodes)
         except Exception as e:
-            print(f"生成合成图错误: {e}")
+            print(f"Error generating synthetic graph: {e}")
             return original_graph.copy()
 
     def sample_base_graph(self, target_element: Any, element_type: str,
@@ -243,7 +243,7 @@ class ExactMIAAttacker:
                         len(subgraph_nodes)
                     ])
                 except Exception as e:
-                    print(f"2-hop 特征计算失败: {e}")
+                    print(f"2-hop feature computation failed: {e}")
                     features.extend([0, 0, 0, 0, 0])
             else:
                 features.extend([0, 0, 0, 0, 0])
@@ -329,9 +329,9 @@ class ExactMIAAttacker:
         if len(features) > 0:
             X = np.vstack(features)
             unique_rows = len(np.unique(X, axis=0))
-            print(f"[DEBUG] ε={epsilon}, elem={target_element}: {unique_rows}/{len(X)} 唯一特征向量")
+            print(f"[DEBUG] ε={epsilon}, elem={target_element}: {unique_rows}/{len(X)} unique feature vectors")
             if unique_rows < 5:
-                print("⚠️  警告：特征多样性不足！")
+                print("⚠️  Warning: insufficient feature diversity!")
         else:
             X = np.zeros((0, 10), dtype=np.float32)
             labels = []
@@ -367,7 +367,7 @@ class ExactMIAAttacker:
             )
             clf.fit(train_x_scaled, train_y)
 
-            print(f"✅ 成功训练 Random Forest 影子模型 | ε={epsilon}, {len(train_x)} 样本")
+            print(f"✅ Successfully trained Random Forest shadow model | ε={epsilon}, {len(train_x)} samples")
 
             return {
                 'classifier': clf,
@@ -377,7 +377,7 @@ class ExactMIAAttacker:
             }
 
         except Exception as e:
-            print(f"❌ 训练 Random Forest 失败: {e}")
+            print(f"❌ Failed to train Random Forest: {e}")
             import traceback
             traceback.print_exc()
             return {'trained': False}
@@ -387,10 +387,10 @@ class ExactMIAAttacker:
         cache_key = (element_type, target_element, epsilon)
 
         if cache_key not in self.shadow_model_cache:
-            print(f"🔥 临时禁用缓存，重新训练模型")
+            print(f"🔥 Temporarily disabling the cache and retraining the model")
             return self.train_shadow_models_core(target_element, element_type, epsilon, reference_graph, n_shadow=10)
         else:
-            print(f"🟠 使用缓存模型 (潜在过拟合风险): {element_type}-{target_element}, ε={epsilon}")
+            print(f"🟠 Using cached model (potential overfitting risk): {element_type}-{target_element}, ε={epsilon}")
 
         return self.shadow_model_cache[cache_key]
 
@@ -413,7 +413,7 @@ class ExactMIAAttacker:
             return prediction, pred_proba
 
         except Exception as e:
-            print(f"Random Forest 预测错误: {e}")
+            print(f"Random Forest prediction error: {e}")
             return 0, np.array([0.5, 0.5])
 
     def execute_mia_attack(self, target_element: Any, element_type: str,
@@ -436,8 +436,8 @@ class ExactMIAAttacker:
 
                 correct_confidence = pred_proba[actual_membership]
 
-                print(f"    实际成员: {actual_membership}, 预测: {guess}, 成功: {attack_success}, "
-                      f"置信度(P_正确): {correct_confidence:.3f}")
+                print(f"    actual membership: {actual_membership}, prediction: {guess}, success: {attack_success}, "
+                      f"confidence(P_correct): {correct_confidence:.3f}")
 
                 return {
                     'target_element': target_element,
@@ -453,7 +453,7 @@ class ExactMIAAttacker:
                 }
 
             except Exception as e:
-                print(f"MIA分类器预测错误: {e}")
+                print(f"MIA classifier prediction error: {e}")
                 return {
                     'target_element': target_element,
                     'element_type': element_type,
@@ -554,7 +554,7 @@ class ExactMIAAttacker:
         filepath = os.path.join(output_path, filename)
         final_table.to_csv(filepath, index=False)
 
-        print(f"\n最终统计表格已保存到: {filepath}")
+        print(f"\nFinal statistics table saved to: {filepath}")
         return filepath
 
     def run_mia_evaluation(self, epsilon_values: List[float], reference_graph_path: str,
@@ -577,11 +577,11 @@ class ExactMIAAttacker:
 
         start_total_time = time.time()
 
-        print(f"\n开始MIA评估")
-        print(f"Epsilon值: {epsilon_values}")
-        print(f"节点目标数: {len(node_targets)}, 每个目标攻击次数: {attacks_per_target}")
-        print(f"边目标数: {len(edge_targets)}, 每个目标攻击次数: {attacks_per_target}")
-        print(f"总攻击次数: {total_attacks}")
+        print(f"\nStarting MIA evaluation")
+        print(f"Epsilon values: {epsilon_values}")
+        print(f"Number of node targets: {len(node_targets)}, attacks per target: {attacks_per_target}")
+        print(f"Number of edge targets: {len(edge_targets)}, attacks per target: {attacks_per_target}")
+        print(f"Total attacks: {total_attacks}")
         print("=" * 80)
 
         timing_logs = []
@@ -596,7 +596,7 @@ class ExactMIAAttacker:
             node_element_success_rates = {}
 
             for target_idx, target_node in enumerate(node_targets):
-                print(f"  节点目标 {target_idx + 1}/{len(node_targets)}: {target_node}")
+                print(f"  Node target {target_idx + 1}/{len(node_targets)}: {target_node}")
                 node_target_results = []
                 node_element_success_rates[target_node] = []
 
@@ -609,24 +609,24 @@ class ExactMIAAttacker:
                     node_element_success_rates[target_node].append(result['attack_success'])
 
                     status = "✓" if result['prediction'] == 1 else "✗"
-                    success_str = "成功" if result['attack_success'] == 1 else "失败"
-                    actual_membership = "在" if result['actual_membership'] == 1 else "不在"
-                    release_type = "原始图" if result['release_type'] == 'original' else "合成图"
+                    success_str = "success" if result['attack_success'] == 1 else "failure"
+                    actual_membership = "in" if result['actual_membership'] == 1 else "not in"
+                    release_type = "original graph" if result['release_type'] == 'original' else "synthetic graph"
                     conf = result.get('correct_confidence', 0.5)
 
-                    print(f"    [{current_attack:3d}/{total_attacks}] 第{attack_round + 1:2d}次 | "
-                          f"发布: {release_type:4s} | 实际: {actual_membership} | 预测: {status} | "
-                          f"结果: {success_str} | 置信度: {conf:.3f}")
+                    print(f"    [{current_attack:3d}/{total_attacks}] Iteration {attack_round + 1:2d} | "
+                          f"release: {release_type:4s} | actual: {actual_membership} | prediction: {status} | "
+                          f"result: {success_str} | confidence: {conf:.3f}")
 
                 target_success_rate = np.mean([r['attack_success'] for r in node_target_results])
-                print(f"    {target_node} 平均成功率: {target_success_rate:.3f}")
+                print(f"    {target_node} average success rate: {target_success_rate:.3f}")
 
             edge_epsilon_results = []
             edge_element_success_rates = {}
 
             for target_idx, target_edge in enumerate(edge_targets):
                 edge_str = f"({target_edge[0]},{target_edge[1]})"
-                print(f"  边目标 {target_idx + 1}/{len(edge_targets)}: {edge_str}")
+                print(f"  Edge target {target_idx + 1}/{len(edge_targets)}: {edge_str}")
                 edge_target_results = []
                 edge_element_success_rates[target_edge] = []
 
@@ -639,17 +639,17 @@ class ExactMIAAttacker:
                     edge_element_success_rates[target_edge].append(result['attack_success'])
 
                     status = "✓" if result['prediction'] == 1 else "✗"
-                    success_str = "成功" if result['attack_success'] == 1 else "失败"
-                    actual_membership = "在" if result['actual_membership'] == 1 else "不在"
-                    release_type = "原始图" if result['release_type'] == 'original' else "合成图"
+                    success_str = "success" if result['attack_success'] == 1 else "failure"
+                    actual_membership = "in" if result['actual_membership'] == 1 else "not in"
+                    release_type = "original graph" if result['release_type'] == 'original' else "synthetic graph"
                     conf = result.get('correct_confidence', 0.5)
 
-                    print(f"    [{current_attack:3d}/{total_attacks}] 第{attack_round + 1:2d}次 | "
-                          f"发布: {release_type:4s} | 实际: {actual_membership} | 预测: {status} | "
-                          f"结果: {success_str} | 置信度: {conf:.3f}")
+                    print(f"    [{current_attack:3d}/{total_attacks}] Iteration {attack_round + 1:2d} | "
+                          f"release: {release_type:4s} | actual: {actual_membership} | prediction: {status} | "
+                          f"result: {success_str} | confidence: {conf:.3f}")
 
                 target_success_rate = np.mean([r['attack_success'] for r in edge_target_results])
-                print(f"    {edge_str} 平均成功率: {target_success_rate:.3f}")
+                print(f"    {edge_str} average success rate: {target_success_rate:.3f}")
 
             end_epsilon_time = time.time()
             epsilon_duration = end_epsilon_time - start_epsilon_time
@@ -665,20 +665,20 @@ class ExactMIAAttacker:
                 node_avg_success = np.mean(node_avg_success_rates)
                 node_max_success = np.max(node_avg_success_rates)
                 node_min_success = np.min(node_avg_success_rates)
-                print(f"  节点攻击成功率统计:")
+                print(f"  Node attack success statistics:")
                 print(
-                    f"    平均成功率: {node_avg_success:.3f}, 最大: {node_max_success:.3f}, 最小: {node_min_success:.3f}")
+                    f"    average success rate: {node_avg_success:.3f}, max: {node_max_success:.3f}, min: {node_min_success:.3f}")
 
             if edge_element_success_rates:
                 edge_avg_success_rates = [np.mean(successes) for successes in edge_element_success_rates.values()]
                 edge_avg_success = np.mean(edge_avg_success_rates)
                 edge_max_success = np.max(edge_avg_success_rates)
                 edge_min_success = np.min(edge_avg_success_rates)
-                print(f"  边攻击成功率统计:")
+                print(f"  Edge attack success statistics:")
                 print(
-                    f"    平均成功率: {edge_avg_success:.3f}, 最大: {edge_max_success:.3f}, 最小: {edge_min_success:.3f}")
+                    f"    average success rate: {edge_avg_success:.3f}, max: {edge_max_success:.3f}, min: {edge_min_success:.3f}")
 
-            print(f"\n📊 攻击优势双指标对比 (ε={epsilon}):")
+            print(f"\n📊 Attack advantage comparison with two metrics (ε={epsilon}):")
 
             results_eps = [r for r in all_results if r['epsilon'] == epsilon]
 
@@ -696,14 +696,14 @@ class ExactMIAAttacker:
             print(f"Classic Advantage: {classic_advantage:8.3f}")
             print(f"Confidence Advantage: {confidence_advantage:8.3f}")
 
-            print(f"  🔹 本组 (ε={epsilon}) 耗时: {epsilon_duration:.2f} 秒")
+            print(f"  🔹 This group (ε={epsilon}) elapsed time: {epsilon_duration:.2f} seconds")
 
         end_total_time = time.time()
         total_duration = end_total_time - start_total_time
 
         print("\n" + "=" * 80)
-        print(f"MIA攻击评估完成")
-        print(f"📌 总耗时: {total_duration:.2f} 秒 ({total_duration / 60:.2f} 分钟)")
+        print(f"MIA attack evaluation completed")
+        print(f"📌 total elapsed time: {total_duration:.2f} seconds ({total_duration / 60:.2f} minutes)")
         print("=" * 80)
 
         final_table = self.calculate_final_statistics_table(all_results)
@@ -720,9 +720,9 @@ class ExactMIAAttacker:
         else:
             timing_file = os.path.join(output_path, f"timing_log_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv")
         timing_df.to_csv(timing_file, index=False)
-        print(f"⏱️  时间日志已保存至: {timing_file}")
+        print(f"⏱️  Timing log saved to: {timing_file}")
 
-        print("最终统计表格:")
+        print("Final statistics table:")
         print(final_table.to_string(index=False))
 
         return final_table, all_results
@@ -730,28 +730,28 @@ class ExactMIAAttacker:
 
 if __name__ == "__main__":
 
-    parser = argparse.ArgumentParser(description='成员推断攻击(MIA)')
+    parser = argparse.ArgumentParser(description='Membership inference attack (MIA)')
 
     parser.add_argument('--original_graph', type=str, required=True,
-                        help='原始图文件路径')
+                        help='Path to original graph file')
     parser.add_argument('--reference_graph', type=str, required=True,
-                        help='参考图文件路径')
+                        help='Path to reference graph file')
     parser.add_argument('--dpgs_module', type=str, required=True,
-                        help='DPGS模块文件路径')
+                        help='Path to DPGS module file')
     parser.add_argument('--dpgs_function', type=str, required=True,
-                        help='DPGS函数名称')
+                        help='DPGS function name')
 
     parser.add_argument('--node_targets', type=int, required=True,
-                        help='节点目标数量')
+                        help='Number of node targets')
     parser.add_argument('--edge_targets', type=int, required=True,
-                        help='边目标数量')
+                        help='Number of edge targets')
     parser.add_argument('--attacks_per_target', type=int, required=True,
-                        help='每个目标的攻击次数')
+                        help='Number of attacks per target')
     parser.add_argument('--epsilon_values', type=str, required=True,
-                        help='隐私预算列表，用逗号分隔，例如: 0.01,1,999')
+                        help='Comma-separated privacy budget list, e.g., 0.01,1,999')
 
     parser.add_argument('--output_prefix', type=str, required=True,
-                        help='输出文件前缀，用于生成带属性的文件名')
+                        help='Output file prefix for generated result files')
 
     args = parser.parse_args()
 
